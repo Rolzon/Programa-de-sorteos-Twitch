@@ -1,4 +1,8 @@
 import express from 'express';
+import dotenv from 'dotenv';
+
+// Load environment variables BEFORE reading them
+dotenv.config();
 
 const router = express.Router();
 
@@ -79,7 +83,12 @@ router.get('/callback', async (req, res) => {
     });
 
     // Redirect to frontend with session ID
-    res.redirect(`http://localhost:5173?session=${sessionId}`);
+    // Use the origin of TWITCH_REDIRECT_URI so it works in production
+    const redirectOrigin = TWITCH_REDIRECT_URI
+      ? new URL(TWITCH_REDIRECT_URI).origin
+      : 'http://localhost:5173';
+
+    res.redirect(`${redirectOrigin}?session=${sessionId}`);
   } catch (error) {
     console.error('Auth error:', error);
     res.status(500).send('Authentication failed');
