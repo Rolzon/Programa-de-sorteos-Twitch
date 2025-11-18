@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  lachhh-tools:
+    build: .
+    container_name: lachhh-tools
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - TWITCH_CLIENT_ID=${TWITCH_CLIENT_ID}
+      - TWITCH_CLIENT_SECRET=${TWITCH_CLIENT_SECRET}
+      - TWITCH_REDIRECT_URI=${TWITCH_REDIRECT_URI}
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - lachhh-network
+
+networks:
+  lachhh-network:
+    driver: bridge

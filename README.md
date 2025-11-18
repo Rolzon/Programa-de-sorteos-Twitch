@@ -15,9 +15,16 @@ Recreación moderna de LachhhTools como **aplicación de escritorio instalable**
 
 ## 📋 Requisitos previos
 
+### Para uso local (Desktop):
 - Node.js 18 o superior
+- Windows 10/11
 - Cuenta de desarrollador de Twitch
-- Navegador web moderno
+
+### Para servidor web:
+- Servidor Linux (Ubuntu 20.04+ / Debian 11+)
+- Node.js 18 o superior
+- Dominio (opcional pero recomendado)
+- 1GB RAM mínimo
 
 ## 🔧 Configuración
 
@@ -45,6 +52,7 @@ npm install
 
 ### 4. Iniciar la aplicación
 
+**Para Desktop (Windows):**
 ```bash
 # Modo desarrollo (abre la aplicación de escritorio)
 npm run dev
@@ -53,7 +61,19 @@ npm run dev
 npm run build:win
 ```
 
-La aplicación se abrirá automáticamente como programa de escritorio.
+**Para Servidor Web:**
+```bash
+# Modo desarrollo
+npm run dev:web
+
+# Compilar y ejecutar en producción
+npm run build:web
+npm run start:server
+```
+
+Ver guías detalladas:
+- 📱 **Desktop**: `INICIO_RAPIDO.md`
+- 🌐 **Servidor**: `DEPLOY_RAPIDO.md` o `INSTALACION_SERVIDOR.md`
 
 ## 📖 Uso
 

@@ -9,10 +9,13 @@
     "dev:server": "node --watch server/index.js",
     "dev:client": "vite",
     "dev:electron": "wait-on http://localhost:5173 && electron .",
+    "dev:web": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "build": "vite build && electron-builder",
     "build:win": "vite build && electron-builder --win",
+    "build:web": "vite build",
     "preview": "vite preview",
     "start": "electron .",
+    "start:server": "NODE_ENV=production node server/index.js",
     "package": "electron-builder"
   },
   "build": {

@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+.env
+.env.local
+.git
+.gitignore
+README.md
+INSTRUCCIONES*.md
+INICIO_RAPIDO.md
+dist-electron
+electron
+*.md
+.vscode
+.idea
+logs
+*.log
