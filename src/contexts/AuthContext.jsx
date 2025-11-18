@@ -36,7 +36,9 @@ export function AuthProvider({ children }) {
 
   const fetchSession = async (sid) => {
     try {
-      const response = await fetch(`http://localhost:3000/auth/session/${sid}`)
+      // Use relative URL so it works both in local dev (via Vite proxy)
+      // and in production (same origin as the server)
+      const response = await fetch(`/auth/session/${sid}`)
       
       if (response.ok) {
         const data = await response.json()
@@ -57,7 +59,8 @@ export function AuthProvider({ children }) {
 
   const login = async () => {
     try {
-      const response = await fetch('http://localhost:3000/auth/login')
+      // Relative URL for dev (Vite proxy) and production (same origin)
+      const response = await fetch('/auth/login')
       const data = await response.json()
       
       if (data.authUrl) {
@@ -71,7 +74,8 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     if (sessionId) {
       try {
-        await fetch(`http://localhost:3000/auth/logout/${sessionId}`, {
+        // Relative URL so it hits the same origin server
+        await fetch(`/auth/logout/${sessionId}`, {
           method: 'POST',
         })
       } catch (error) {
