@@ -8,7 +8,21 @@ export default function CountdownWinnerWidget() {
   const [ws, setWs] = useState(null)
 
   useEffect(() => {
-    const websocket = new WebSocket('ws://localhost:3000/ws')
+    // Build WebSocket URL compatible with local dev and production
+    let wsUrl
+    if (typeof window !== 'undefined') {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      if (isLocal) {
+        wsUrl = 'ws://localhost:3007/ws'
+      } else {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+        wsUrl = `${protocol}//${window.location.host}/ws`
+      }
+    } else {
+      wsUrl = 'ws://localhost:3007/ws'
+    }
+
+    const websocket = new WebSocket(wsUrl)
 
     websocket.onopen = () => {
       console.log('Countdown Winner Widget connected')
