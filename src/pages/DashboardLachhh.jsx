@@ -26,6 +26,7 @@ export default function DashboardLachhh() {
 
   const [activeTab, setActiveTab] = useState('giveaway')
   const [giveaway, setGiveaway] = useState(null)
+  const [giveawayId, setGiveawayId] = useState(null)
   const [participants, setParticipants] = useState([])
   const [winners, setWinners] = useState([])
   const [isAnimating, setIsAnimating] = useState(false)
@@ -133,6 +134,15 @@ export default function DashboardLachhh() {
   }
 
   const startAnimation = async () => {
+    if (!sessionId) {
+      toast({
+        title: 'Sesión no válida',
+        description: 'Vuelve a iniciar sesión con Twitch.',
+        variant: 'destructive',
+      })
+      return
+    }
+
     if (participants.length === 0) {
       toast({
         title: 'Error',
@@ -142,19 +152,94 @@ export default function DashboardLachhh() {
       return
     }
 
-    setIsAnimating(true)
-    
-    // Simulate animation and winner selection
-    setTimeout(() => {
-      const randomIndex = Math.floor(Math.random() * participants.length)
-      const winner = participants[randomIndex]
-      setWinners([winner])
-      setWinnerName(winner.displayName)
-      
-      // Start countdown for winner response
-      setCountdown(countdownTime)
-      setTargetName(winner.displayName)
-    }, 3000)
+    try {
+      let currentGiveawayId = giveawayId
+
+      // 1) Crear giveaway si aún no existe
+      if (!currentGiveawayId) {
+        const createRes = await fetch('/api/giveaway/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-session-id': sessionId,
+          },
+          body: JSON.stringify({
+            title: 'Twitch Giveaway',
+            description: 'Sorteo automático desde panel LachhhTools',
+            type: 'manual',
+            duration: null,
+            keyword: '',
+            requirements: {},
+            maxWinners: 1,
+          }),
+        })
+
+        if (!createRes.ok) {
+          const errorData = await createRes.json().catch(() => ({}))
+          throw new Error(errorData.error || 'No se pudo crear el sorteo')
+        }
+
+        const createData = await createRes.json()
+        currentGiveawayId = createData.giveaway.id
+        setGiveaway(createData.giveaway)
+        setGiveawayId(currentGiveawayId)
+      }
+
+      // 2) (Opcional) Podríamos mandar los participantes al backend aquí
+      //    Por ahora asumimos que el sistema de chat los añade.
+
+      // 3) Iniciar giveaway para que los widgets reciban giveaway_started
+      const startRes = await fetch(`/api/giveaway/${currentGiveawayId}/start`, {
+        method: 'POST',
+        headers: {
+          'x-session-id': sessionId,
+        },
+      })
+
+      if (!startRes.ok) {
+        const errorData = await startRes.json().catch(() => ({}))
+        throw new Error(errorData.error || 'No se pudo iniciar el sorteo')
+      }
+
+      const startData = await startRes.json()
+      setGiveaway(startData.giveaway)
+      setIsAnimating(true)
+
+      // 4) Seleccionar ganador(es) para disparar winners_drawn
+      const drawRes = await fetch(`/api/giveaway/${currentGiveawayId}/draw`, {
+        method: 'POST',
+        headers: {
+          'x-session-id': sessionId,
+        },
+      })
+
+      if (!drawRes.ok) {
+        const errorData = await drawRes.json().catch(() => ({}))
+        throw new Error(errorData.error || 'No se pudieron seleccionar ganadores')
+      }
+
+      const drawData = await drawRes.json()
+      setWinners(drawData.winners || [])
+
+      if (drawData.winners && drawData.winners[0]) {
+        const winner = drawData.winners[0]
+        setWinnerName(winner.displayName || winner.username)
+        setTargetName(winner.displayName || winner.username)
+        setCountdown(countdownTime)
+      }
+
+      toast({
+        title: 'Sorteo iniciado',
+        description: 'La animación se está reproduciendo en el widget.',
+      })
+    } catch (error) {
+      console.error('Error al iniciar la animación:', error)
+      toast({
+        title: 'Error al iniciar sorteo',
+        description: error.message || 'Revisa la consola del navegador para más detalles.',
+        variant: 'destructive',
+      })
+    }
   }
 
   const startCountdown = () => {

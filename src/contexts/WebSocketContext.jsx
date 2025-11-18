@@ -24,7 +24,23 @@ export function WebSocketProvider({ children }) {
   }, [])
 
   const connectWebSocket = () => {
-    const websocket = new WebSocket('ws://localhost:3000/ws')
+    // Build WebSocket URL that works in dev and production
+    let wsUrl
+    if (typeof window !== 'undefined') {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      if (isLocal) {
+        // Local development: backend on port 3007
+        wsUrl = 'ws://localhost:3007/ws'
+      } else {
+        // Production: same origin, use wss if page is https
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+        wsUrl = `${protocol}//${window.location.host}/ws`
+      }
+    } else {
+      wsUrl = 'ws://localhost:3007/ws'
+    }
+
+    const websocket = new WebSocket(wsUrl)
 
     websocket.onopen = () => {
       console.log('WebSocket connected')
