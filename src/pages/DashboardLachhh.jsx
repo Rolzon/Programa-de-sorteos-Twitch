@@ -26,7 +26,6 @@ export default function DashboardLachhh() {
 
   const [activeTab, setActiveTab] = useState('giveaway')
   const [giveaway, setGiveaway] = useState(null)
-  const [giveawayId, setGiveawayId] = useState(null)
   const [participants, setParticipants] = useState([])
   const [winners, setWinners] = useState([])
   const [isAnimating, setIsAnimating] = useState(false)
@@ -153,40 +152,51 @@ export default function DashboardLachhh() {
     }
 
     try {
-      let currentGiveawayId = giveawayId
+      // 1) Crear SIEMPRE un nuevo giveaway
+      const createRes = await fetch('/api/giveaway/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-session-id': sessionId,
+        },
+        body: JSON.stringify({
+          title: 'Twitch Giveaway',
+          description: 'Sorteo automático desde panel LachhhTools',
+          type: 'manual',
+          duration: null,
+          keyword: '',
+          requirements: {},
+          maxWinners: 1,
+        }),
+      })
 
-      // 1) Crear giveaway si aún no existe
-      if (!currentGiveawayId) {
-        const createRes = await fetch('/api/giveaway/create', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-session-id': sessionId,
-          },
-          body: JSON.stringify({
-            title: 'Twitch Giveaway',
-            description: 'Sorteo automático desde panel LachhhTools',
-            type: 'manual',
-            duration: null,
-            keyword: '',
-            requirements: {},
-            maxWinners: 1,
-          }),
-        })
-
-        if (!createRes.ok) {
-          const errorData = await createRes.json().catch(() => ({}))
-          throw new Error(errorData.error || 'No se pudo crear el sorteo')
-        }
-
-        const createData = await createRes.json()
-        currentGiveawayId = createData.giveaway.id
-        setGiveaway(createData.giveaway)
-        setGiveawayId(currentGiveawayId)
+      if (!createRes.ok) {
+        const errorData = await createRes.json().catch(() => ({}))
+        throw new Error(errorData.error || 'No se pudo crear el sorteo')
       }
 
-      // 2) (Opcional) Podríamos mandar los participantes al backend aquí
-      //    Por ahora asumimos que el sistema de chat los añade.
+      const createData = await createRes.json()
+      const currentGiveawayId = createData.giveaway.id
+      setGiveaway(createData.giveaway)
+
+      // 2) Enviar participantes locales al backend
+      await Promise.all(
+        participants.map((p) =>
+          fetch(`/api/giveaway/${currentGiveawayId}/participate`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-session-id': sessionId,
+            },
+            body: JSON.stringify({
+              userId: p.userId,
+              username: p.username,
+              displayName: p.displayName,
+              message: '',
+            }),
+          }).catch(() => null)
+        )
+      )
 
       // 3) Iniciar giveaway para que los widgets reciban giveaway_started
       const startRes = await fetch(`/api/giveaway/${currentGiveawayId}/start`, {
